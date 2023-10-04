@@ -1,0 +1,12 @@
+numpy
+torch
+torchvision
+torchaudio
+matplotlib
+pandas
+scikit-learn
+albumentations
+segmentation-models-pytorch
+pytorch-lightning
+wandb
+strenum
