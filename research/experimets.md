@@ -10,9 +10,9 @@
 
 Most of the models are training in the save fashion except for the 'LinkNet' with slow start.
 
-Results in [experiment1.csv](../../md_assets/experiments/experiment1.csv)
+Results in [experiment1.csv](./../md_assets/experiments/experiment1.csv)
 
-![Experiment1](../../md_assets/images/experiment1.png)
+![Experiment1](./../md_assets/images/experiment1.png)
 
 
 ## 2. Experiment - RGB vs. Sentinel2 Multispectral
@@ -27,9 +27,9 @@ Results in [experiment1.csv](../../md_assets/experiments/experiment1.csv)
 
 The models pretrained on Sentine2 data are performing better than the models pretrained on Imagenet after 10 epochs. However the convergence was not reached so the results are not conclusive. We can say that the learning should be quicker with the pretrained weights on Sentinel2 data.
 
-Results in [experiment2.csv](../../md_assets/experiments/experiment2.csv)
+Results in [experiment2.csv](./../md_assets/experiments/experiment2.csv)
 
-![Experiment2](../../md_assets/images/experiment2.png)
+![Experiment2](./../md_assets/images/experiment2.png)
 
 
 
@@ -50,7 +50,7 @@ The results shows that the normalization helps quite a lot for the fine-tuning f
 
 | Model | Training accuracy | Validation accuracy |
 | ---   | --- | --- |
-| ResNet18 pretrained on Imagenet | ![Training accuracy](../../md_assets/images/experiment3_train_acc.png) | ![Validation accuracy](../../md_assets/images/experiment3_val_acc.png) |
-|  | [csv](../../md_assets/experiments/experiment3_train_acc.csv) | [csv](../../md_assets/experiments/experiment3_val_acc.csv) |
-| ResNet18 pretrained on SSL4EO-S12 | ![Training accuracy](../../md_assets/images/experiment3_train_acc_S2.png) | ![Validation accuracy](../../md_assets/images/experiment3_val_acc_S2.png) |
-|  | [csv](../../md_assets/experiments/experiment3_train_acc_S2.csv) | [csv](../../md_assets/experiments/experiment3_val_acc_S2.csv) |
+| ResNet18 pretrained on Imagenet | ![Training accuracy](./../md_assets/images/experiment3_train_acc.png) | ![Validation accuracy](./../md_assets/images/experiment3_val_acc.png) |
+|  | [csv](./../md_assets/experiments/experiment3_train_acc.csv) | [csv](./../md_assets/experiments/experiment3_val_acc.csv) |
+| ResNet18 pretrained on SSL4EO-S12 | ![Training accuracy](./../md_assets/images/experiment3_train_acc_S2.png) | ![Validation accuracy](./../md_assets/images/experiment3_val_acc_S2.png) |
+|  | [csv](./../md_assets/experiments/experiment3_train_acc_S2.csv) | [csv](./../md_assets/experiments/experiment3_val_acc_S2.csv) |

@@ -30,10 +30,6 @@ class ImageSegmentationModule(pl.LightningModule):
         
         self.save_hyperparameters(cfg.__dict__)
         
-        self.validation_step_outputs = []
-        
-        self.queue_size = cfg.log_config.n_images 
-        
         self.rich_validation = False
         
     def forward(self, x):

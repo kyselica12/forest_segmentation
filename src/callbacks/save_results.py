@@ -27,6 +27,8 @@ class SaveResults(Callback):
         self.mode = mode
         self.size = size
         self.queue = []
+        
+        self.output_queue = []
 
         self.default_value = -1e9
         
@@ -52,13 +54,16 @@ class SaveResults(Callback):
         self.add(outputs["inputs"], outputs["targets"], outputs["preds"], outputs["metric"], indices)
         
         if self.frequency == "batch":
-            self.save_queue(trainer, pl_module) 
+            self.output_queue.extend(self.queue)
             self.queue = []
         
     def on_validation_epoch_end(self, trainer: Trainer, pl_module: ImageSegmentationModule):
         if self.frequency == "epoch":
-            self.save_queue(trainer, pl_module) 
+            self.output_queue.extend(self.queue)
             self.queue = []
+        
+        if len(self.output_queue) > 0:
+            self.flush_output(trainer, pl_module)
 
     def add(self, inputs, targets, preds, metric, indices):
         
@@ -84,12 +89,12 @@ class SaveResults(Callback):
              
                 current = self.queue[0][0]
     
-    def save_queue(self, trainer: Trainer, module: ImageSegmentationModule):
+    def flush_output(self, trainer: Trainer, module: ImageSegmentationModule):
         
         columns = ["metric", "input", "pred", "target", "diff"]
         data = []
         
-        for metric, images in self.queue:
+        for metric, images in self.output_queue:
             
             img = module.data_processor.create_rgb_image(images["input"])
             # print(img)
@@ -102,7 +107,9 @@ class SaveResults(Callback):
                     color.label2rgb(images["target"], img,  alpha=0.3),
                     module.data_processor.create_mask_difference_image(images["target"], images["preds"], img) 
                 ]
-            )    
+            )  
+        
+        self.output_queue = []  
                 
         epoch = trainer.current_epoch
         

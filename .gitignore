@@ -1,6 +1,7 @@
 resources/backbones/*
 results/*
-
+resources/datasets/
+resources/pl/
 
 
 # Byte-compiled / optimized / DLL files
@@ -98,6 +99,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+env/
 .env
 .venv
 env/

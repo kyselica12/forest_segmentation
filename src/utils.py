@@ -62,8 +62,8 @@ def get_callbacks(callback_cfg):
 def train(config: Config):
     logger = False
 
+    register_SSL4EO_S12_encoders(PACKAGE_PATH)
     if config.log_config.wandb_logger:
-        register_SSL4EO_S12_encoders(PACKAGE_PATH)
         log_in_to_wandb()
         logger = WandbLogger(
                 project=config.log_config.project,

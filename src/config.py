@@ -12,8 +12,8 @@ if SECRET_KEY:
     PACKAGE_PATH = "/app"
     DATA_PATH = "/data"
 else:
-    PACKAGE_PATH = "/home/daniel/Documents/hsi-forest-segmentation/Kyselica"
-    DATA_PATH = "/media/daniel/data"
+    PACKAGE_PATH = "/home/daniel/Documents/work/forest_segmentation"
+    DATA_PATH = "/media/daniel/data1"
 
 class Sentinel2Bands(IntEnum):
     B1 = 0      # Aerosols
