@@ -37,9 +37,9 @@ class ImageSegmentationModule(pl.LightningModule):
     
     def training_step(self, batch, batch_idx):
         preds, acc, loss = self._get_preds_acc_loss(batch, batch_idx)
-        self.log('train_loss', loss)
-        self.log('train_acc', acc)
-        self.log('train_dice_score', self._dice_score(preds, batch[1]))
+        self.log('train_loss', loss, sync_dist=True)
+        self.log('train_acc', acc, sync_dist=True)
+        self.log('train_dice_score', self._dice_score(preds, batch[1]), sync_dist=True)
         
         return loss
     
@@ -51,9 +51,9 @@ class ImageSegmentationModule(pl.LightningModule):
         
     def _validation_step_basic(self, batch, batch_idx):
         preds, acc, loss = self._get_preds_acc_loss(batch, batch_idx)
-        self.log('val_loss', loss)
-        self.log('val_acc', acc)
-        self.log('val_dice_score', self._dice_score(preds, batch[1]))
+        self.log('val_loss', loss, sync_dist=True, sync_dist=True)
+        self.log('val_acc', acc, sync_dist=True, sync_dist=True)
+        self.log('val_dice_score', self._dice_score(preds, batch[1]), sync_dist=True, sync_dist=True)
         return loss
     
     def _rich_validation_step(self, batch, batch_idx):
@@ -70,9 +70,9 @@ class ImageSegmentationModule(pl.LightningModule):
         
         losses = torch.tensor(losses)
         
-        self.log('val_loss', losses.mean())
-        self.log('val_acc', acc)
-        self.log('val_dice_score', self._dice_score(preds, batch[1]))
+        self.log('val_loss', losses.mean(), sync_dist=True)
+        self.log('val_acc', acc, sync_dist=True)
+        self.log('val_dice_score', self._dice_score(preds, batch[1]), sync_dist=True)
 
         return {
             "inputs": batch[0],
@@ -106,10 +106,16 @@ class ImageSegmentationModule(pl.LightningModule):
 
     def _dice_score(self, preds, targets):
         
-        inersection = (preds == targets).sum()
-        union = preds.numel() + targets.numel()
+        dice_score = 0
+        for i in range(len(self.cfg.data_config.classes)):
+            intersection = torch.logical_and(preds == (i+1), targets == (i+1)).sum()
+            union = (preds == (i+1)).sum() + (targets == (i+1)).sum()
+            dice = 2 * intersection / union
+            dice_score += dice
         
-        return 2 * inersection / union
+        dice_score /= len(self.cfg.data_config.classes)
+                 
+        return dice_score
     
     def get_data_loaders(self):
         """Initialize data loaders using main configuration
