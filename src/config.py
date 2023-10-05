@@ -102,8 +102,6 @@ class LogConfig:
 @dataclass
 class Config:
     device: str = 'cuda'
-    batch_size: int = 32
-    num_workers: int = 4
     num_epochs: int = 5
     data_config: DataConfig = field(default_factory=DataConfig)
     net_config: NetConfig = field(default_factory=NetConfig)
