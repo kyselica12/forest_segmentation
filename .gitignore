@@ -2,7 +2,7 @@ resources/backbones/*
 results/*
 resources/datasets/
 resources/pl/
-
+wandb/
 src/notebooks/
 
 # Byte-compiled / optimized / DLL files

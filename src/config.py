@@ -130,3 +130,9 @@ class CustomNets(StrEnum):
 class CustomNetWeights(StrEnum):
     RESNET18 = "SSL4EO-S12"
     RESNET50 = "SSL4EO-S12"
+
+
+@dataclass
+class CallbackConfig:
+    class_name: str = None
+    args: dict = field(default_factory=dict)
