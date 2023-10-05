@@ -1,7 +1,6 @@
 resources/backbones/*
 results/*
-resources/datasets/
-resources/pl/
+resources/
 wandb/
 src/notebooks/
 
