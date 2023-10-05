@@ -6,15 +6,6 @@ from enum import IntEnum
 from strenum import StrEnum
 import os
 
-SECRET_KEY = os.environ.get("IN_DOCKER_CONTAINER", False)
-
-if SECRET_KEY:
-    PACKAGE_PATH = "/app"
-    DATA_PATH = "/data"
-else:
-    PACKAGE_PATH = "/home/k/kyselica12/work/forest_segmentation"
-    DATA_PATH = "/home/k/kyselica12/work/data"
-
 class Sentinel2Bands(IntEnum):
     B1 = 0      # Aerosols
     B2 = 1      # Blue 
@@ -29,7 +20,6 @@ class Sentinel2Bands(IntEnum):
     B11 = 10    # SWIR 1
     B12 = 11    # SWIR 2
     
-ALL_BANDS_LIST = list(Sentinel2Bands)
 
 class ESAWorldCover(IntEnum):
     TREES = 10
@@ -44,7 +34,6 @@ class ESAWorldCover(IntEnum):
     MANGROVES = 95
     MOSS = 100
 
-ALL_CLASSES_SET = set(ESAWorldCover)
 
 ESAWorldCoverColors = {
     ESAWorldCover.TREES: "#006400",
@@ -64,14 +53,14 @@ ESAWorldCoverColors = {
 class DataConfig:
     width: int = 512
     height: int = 512
-    bands: list = field(default_factory=lambda: ALL_BANDS_LIST)
-    classes: set = field(default_factory=lambda: ALL_CLASSES_SET)
+    bands: list = field(default_factory=list)
+    classes: set = field(default_factory=set)
     stabilization_scale_factor: int = 10000
     batch_size: int = 32
     num_workers: int = 4
     val_size: float = 0.2
     random_state: int = 42
-    output_path: str = f"{PACKAGE_PATH}/resources/datasets"
+    output_path: str = ""
     train_path: str = None
     val_path: str = None
     grid_path: str = None
@@ -82,33 +71,11 @@ class DataConfig:
 @dataclass
 class NetConfig:
     architecture: str = 'DeepLabV3Plus'
-    config: dict = field(default_factory=dict)
-    callbacks: list = field(default_factory=list)
+    args: dict = field(default_factory=dict)
+    in_channels: int = 3
+    n_classes: int = 2
 
-class Frequency(StrEnum):
-    EPOCH = "epoch"
-    BATCH = "batch"
-
-@dataclass
-class LogConfig:
-    project: str = "Test"
-    name: str = "Test"
-    log_model: str = "all"
-    wandb_logger: bool = True
-    log_images: bool = False
-    log_images_freq: str = Frequency.EPOCH 
-    n_images: bool = 5
- 
-@dataclass
-class Config:
-    device: str = 'cuda'
-    num_epochs: int = 5
-    data_config: DataConfig = field(default_factory=DataConfig)
-    net_config: NetConfig = field(default_factory=NetConfig)
-    log_config: LogConfig = field(default_factory=LogConfig)
-    
    
-    
 class NetworkArchitectures(StrEnum):
     DEEPLABV3 = 'DeepLabV3'
     DEEPLABV3PLUS = 'DeepLabV3Plus'
@@ -120,7 +87,6 @@ class NetworkArchitectures(StrEnum):
     FPN = 'FPN'
     PSPNET = 'PSPNet'
     
-    
 class CustomNets(StrEnum):
     RESNET18 = 'resnet18_S2'
     RESNET50 = 'resnet50_S2'
@@ -128,9 +94,3 @@ class CustomNets(StrEnum):
 class CustomNetWeights(StrEnum):
     RESNET18 = "SSL4EO-S12"
     RESNET50 = "SSL4EO-S12"
-
-
-@dataclass
-class CallbackConfig:
-    class_name: str = None
-    args: dict = field(default_factory=dict)

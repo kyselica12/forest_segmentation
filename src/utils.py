@@ -1,16 +1,18 @@
 from typing import List
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import WandbLogger
+from torch.utils.data import DataLoader
 
 import wandb
 import segmentation_models_pytorch as smp
 import torchvision
 
-from config import CallbackConfig, CustomNets, CustomNetWeights, Config, PACKAGE_PATH
+from configs.config import CustomNets, CustomNetWeights 
+from configs.constants import WANDB_API_KEY, PACKAGE_PATH
 from models.backbones.resnet_encoder import SentinelResNetEncoder
 from models.image_segmentation_module import ImageSegmentationModule
+from data.data_processor import DataProcessor
 
-WANDB_API_KEY = "b73e051ec86e9d3e56a2d2c47f1e3661a1b2a4db"
 
 def log_in_to_wandb():
     try:
@@ -52,39 +54,44 @@ def register_SSL4EO_S12_encoders(path):
         }    
     }
 
-def get_callbacks(callback_cfg: List[CallbackConfig]):
-    
-    callbacks = []
-    for callback in callback_cfg:
-        callbacks.append(callback.class_name(**callback.args))
-    
-    return callbacks
-        
-def train(config: Config):
-    logger = False
-
-    register_SSL4EO_S12_encoders(PACKAGE_PATH)
-    if config.log_config.wandb_logger:
-        log_in_to_wandb()
-        logger = WandbLogger(
-                project=config.log_config.project,
-                name=config.log_config.name,
-                log_model=config.log_config.log_model
-        )
-
-    model = ImageSegmentationModule(config)
-    train_loader, val_loader = model.get_data_loaders()
-
-    trainer = Trainer(
-        default_root_dir=f"{PACKAGE_PATH}/resources/pl/",
-        max_epochs=config.num_epochs, 
-        logger=logger, 
-        callbacks=get_callbacks(config.net_config.callbacks)
+def get_wabdb_logger(project, name=None, log_model='all'):
+    log_in_to_wandb()
+    return WandbLogger(
+        project=project,
+        name=name,
+        log_model=log_model
     )
 
-    trainer.fit(model, train_loader, val_loader)     
+def train(module: ImageSegmentationModule, 
+          data_processor: DataProcessor,
+          num_epochs=10, 
+          batch_size=16, 
+          num_workers=4,
+          callbacks=[],
+          logger=None):
 
-    if config.log_config.wandb_logger:
-        wandb.finish()
+    register_SSL4EO_S12_encoders(PACKAGE_PATH)
+    
+    train_set, val_set = data_processor.get_pytorch_datasets() 
+
+    train_loader = DataLoader(
+        train_set,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        shuffle=True,
+        drop_last=True,
+    )
+
+    val_loader = DataLoader(
+        val_set,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        shuffle=False,
+        drop_last=True,
+    )
+    
+    trainer = Trainer(default_root_dir=f"{PACKAGE_PATH}/resources/pl/", max_epochs=num_epochs, logger=logger, callbacks=callbacks)
+
+    trainer.fit(module, train_loader, val_loader)     
 
     

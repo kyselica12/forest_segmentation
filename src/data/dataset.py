@@ -5,7 +5,7 @@ import tifffile
 import tqdm
 import numpy as np
 
-from config import ALL_BANDS_LIST
+from configs.constants import ALL_BANDS_LIST
 
 class SentinelDataset(Dataset):
     

@@ -16,7 +16,8 @@ from torch.utils.data import DataLoader
 
 
 from data.dataset import SentinelDataset
-from config import ALL_BANDS_LIST, ALL_CLASSES_SET, ESAWorldCover, DataConfig, Sentinel2Bands
+from configs.constants import ALL_BANDS_LIST, ALL_CLASSES_SET 
+from configs.config import ESAWorldCover, Sentinel2Bands, DataConfig
 
 
 
@@ -90,6 +91,8 @@ class DataProcessor:
         if not os.path.exists(self.output_path):
             os.mkdir(self.output_path)
         
+        self.prepare_datasets()
+        
     
     def prepare_datasets(self):
         """Three main steps:
@@ -102,7 +105,7 @@ class DataProcessor:
         if self.load and os.path.exists(f"{self.output_path}/train.csv"):
             self.load_csv_dataset()
         else:
-            self.create_dataset()
+            self.create_datasets()
             self.save_csv_dataset()
         
         if self.compute_mean_std:
@@ -111,6 +114,7 @@ class DataProcessor:
             else:
                 self.mean, self.std = self._compute_mean_std(self.X_train, self.y_train, self.scale, self.width, self.height)
                 self._save_mean_std(self.output_path)
+
 
     def save_csv_dataset(self):
         """Save dataset to .csv files
@@ -122,7 +126,7 @@ class DataProcessor:
             train_csv.to_csv(f"{self.output_path}/train.csv", index=False)
             test_csv.to_csv(f"{self.output_path}/test.csv", index=False)
     
-    def create_dataset(self):
+    def create_datasets(self):
         """Load and split data into train and validation sets
         """
         
@@ -144,6 +148,7 @@ class DataProcessor:
         self.y_train = train_masks
         self.X_val = val_images
         self.y_val = val_masks
+
         
     def load_csv_dataset(self):
         """
@@ -412,11 +417,11 @@ class DataProcessor:
         
         return remap
     
-    def get_pytorch_dataloaders(self):
-        """Get pytorch DataLoaders for training and validation
+    def get_pytorch_datasets(self):
+        """Get pytorch DataSets for training and validation
 
         Returns:
-            tuple: train_loader, val_loader
+            tuple: train_set, val_set
         """
         if self.train_set is None or self.val_set is None:
              
@@ -434,25 +439,8 @@ class DataProcessor:
                                         transforms=t_val, label_mappings=class_remap,
                                         scale=self.scale, mean=self.mean, std=self.std,  
                                         use_level_C1=self.use_level_C1)
-            
         
-        train_loader = DataLoader(
-            self.train_set,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            shuffle=True,
-            drop_last=True,
-        )
-
-        val_loader = DataLoader(
-            self.val_set,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            shuffle=False,
-            drop_last=True,
-        )
-        
-        return train_loader, val_loader
+        return self.train_set, self.val_set
 
     def create_rgb_image(self, image):
         """Create RGB image from normalized image from dataloader

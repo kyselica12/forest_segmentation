@@ -7,30 +7,24 @@ import torch.optim as optim
 
 import segmentation_models_pytorch as smp
 
-from data.data_processor import DataProcessor
-from config import Config, NetworkArchitectures
+from configs.config import NetConfig, NetworkArchitectures
 
 class ImageSegmentationModule(pl.LightningModule):
     
-    def __init__(self, cfg: Config):
+    def __init__(self, cfg: NetConfig):
         super().__init__()
-        self.cfg = cfg
-        self.criterion = nn.CrossEntropyLoss()
-        
-        self.n_classes = max(2, len(self.cfg.data_config.classes))
-        self.in_channels = len(self.cfg.data_config.bands)
+        self.n_classes = cfg.n_classes
+        self.in_channels = cfg.in_channels
+        self.architecture = cfg.architecture
+        self.net_args = cfg.args
+        self.rich_validation = False
+
+        self.save_hyperparameters(cfg.__dict__)
 
         self.net = self._initialize_net()
-        self.net.to(device=self.cfg.device)
+        self.criterion = nn.CrossEntropyLoss()
         torch.set_float32_matmul_precision("high")
-
-
-        self.data_processor = DataProcessor(cfg.data_config)
-        self.data_processor.prepare_datasets()
         
-        self.save_hyperparameters(cfg.__dict__)
-        
-        self.rich_validation = False
         
     def forward(self, x):
         return self.net(x)
@@ -124,7 +118,7 @@ class ImageSegmentationModule(pl.LightningModule):
             train_loader: DataLoader, val_loader: DataLoader
         """
         
-        train_loader, val_loader = self.data_processor.get_pytorch_dataloaders() 
+        train_loader, val_loader = self.data_processor.get_pytorch_datasets() 
         
         return train_loader, val_loader
     
@@ -138,7 +132,7 @@ class ImageSegmentationModule(pl.LightningModule):
             nn.Module: initialized model
         """
         
-        match self.cfg.net_config.architecture:
+        match self.architecture:
             case NetworkArchitectures.DEEPLABV3:
                 net_class = smp.DeepLabV3
             case NetworkArchitectures.DEEPLABV3PLUS:
@@ -166,7 +160,7 @@ class ImageSegmentationModule(pl.LightningModule):
         net = net_class(
                         in_channels=self.in_channels, 
                         classes=self.n_classes,
-                        **self.cfg.net_config.config
+                        **self.net_args
                         )
         
         return net

@@ -5,15 +5,15 @@ import re
 sys.path.append(re.sub(r'/src/.*', '/src', os.path.abspath(__file__)))
 
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
+import wandb
 
-from config import *
-from configs.network_configs import *
-from configs.data_configs import *
+from src.configs.config import *
+from configs.constants import *
 
-from experiment import Experiment
+from models.image_segmentation_module import ImageSegmentationModule
 from callbacks.save_results import SaveResults
 from data.data_processor import DataProcessor
-from utils import train
+from utils import train, get_wabdb_logger
 
 # from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 PROJECT = "Finetuned"
@@ -23,45 +23,35 @@ RESULTS_PATH = f"{PACKAGE_PATH}/results/{PROJECT}/{NAME}"
 os.makedirs(RESULTS_PATH, exist_ok=True)
 
 data_cfg: DataConfig = DATA_CONFIG_S2_C1
-data_cfg.train_path = f"{DATA_PATH}/sentinel2/2021_seasons"
+data_cfg.train_path = f"{DATA_PATH}/sentinel2/2021_seasons/Belgium_summer2021"
 
 net_cfg: NetConfig = NET_CONFIG_S2_RESNET18
-checkpoint_callback_cfg = CallbackConfig(
-    class_name=ModelCheckpoint,
-    args={
-        'monitor': 'val_loss',
-        'mode': 'min',
-        'dirpath': f'{PACKAGE_PATH}/resources/models',
-        'filename': f'{PROJECT}-{NAME}-' + '{epoch:02d}-{val_loss:.2f}',
-        'save_top_k': 3
-    }
-)
-stopping_callback_cfg = CallbackConfig(
-    class_name=EarlyStopping,
-    args={
-        'monitor': 'val_loss',
-        'patience': 3,
-        'mode': 'min',
-    }
+
+checkpoint_callback = ModelCheckpoint(
+    monitor='val_loss',
+    mode='min',
+    dirpath=f'{PACKAGE_PATH}/resources/models',
+    filename=f'{PROJECT}-{NAME}-' + '{epoch:02d}-{val_loss:.2f}',
+    save_top_k=3
 )
 
-net_cfg.callbacks = [checkpoint_callback_cfg, stopping_callback_cfg]
-
-
-cfg: Config = Config(
-    batch_size=6,
-    num_workers=1,
-    num_epochs=20,
-    data_config=data_cfg,
-    net_config=net_cfg,
-    log_config=LogConfig(
-        project=PROJECT,
-        name=NAME,
-        wandb_logger=True,
-    )
+stopping_callback = EarlyStopping(
+    monitor='val_loss',
+    patience=3,
+    mode='min',
 )
+    
 
-train(cfg)  
-# experiment = ExperimentBadResults("bad_results", cfg)
-# experiment.run([('test', None)])
+data_processor = DataProcessor(data_cfg)
+module = ImageSegmentationModule(net_cfg)
 
+logger = get_wabdb_logger(PROJECT, NAME, log_model='all')
+logger.config["data"] = data_cfg.__dict__
+logger.config.update()
+
+train(module, data_processor,
+      num_epochs=10, batch_size=16, num_workers=0,
+      callbacks=[checkpoint_callback, stopping_callback],
+      logger=logger)
+
+wandb.finish()

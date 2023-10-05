@@ -13,11 +13,19 @@ from pytorch_lightning.callbacks import Callback
 import torch
 
 from models.image_segmentation_module import ImageSegmentationModule
-
+from data.data_processor import DataProcessor
 
 class SaveResults(Callback):
     
-    def __init__(self, num=1, path="./", frequency="epoch", monitor="loss", mode="max", size=2) -> None:
+    def __init__(self, num=1, 
+                 path="./", 
+                 frequency="epoch", 
+                 monitor="loss", 
+                 mode="max", 
+                 size=2,
+                 data_processor: DataProcessor=None
+                 ):
+        
         super().__init__()
 
         self.num = num
@@ -26,6 +34,7 @@ class SaveResults(Callback):
         self.monitor = monitor
         self.mode = mode
         self.size = size
+        self.data_processor = data_processor
         self.queue = []
         
         self.output_queue = []
@@ -96,7 +105,7 @@ class SaveResults(Callback):
         
         for metric, images in self.output_queue:
             
-            img = module.data_processor.create_rgb_image(images["input"])
+            img = self.data_processor.create_rgb_image(images["input"])
             # print(img)
             # print(images["preds"].shape, images["target"].shape)
             data.append(
@@ -105,7 +114,7 @@ class SaveResults(Callback):
                     img,
                     color.label2rgb(images["preds"], img, alpha=0.3),
                     color.label2rgb(images["target"], img,  alpha=0.3),
-                    module.data_processor.create_mask_difference_image(images["target"], images["preds"], img) 
+                    self.data_processor.create_mask_difference_image(images["target"], images["preds"], img) 
                 ]
             )  
         
