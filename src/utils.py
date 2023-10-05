@@ -1,3 +1,4 @@
+from typing import List
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import WandbLogger
 
@@ -5,7 +6,7 @@ import wandb
 import segmentation_models_pytorch as smp
 import torchvision
 
-from config import CustomNets, CustomNetWeights, Config, PACKAGE_PATH
+from config import CallbackConfig, CustomNets, CustomNetWeights, Config, PACKAGE_PATH
 from models.backbones.resnet_encoder import SentinelResNetEncoder
 from models.image_segmentation_module import ImageSegmentationModule
 
@@ -51,11 +52,11 @@ def register_SSL4EO_S12_encoders(path):
         }    
     }
 
-def get_callbacks(callback_cfg):
+def get_callbacks(callback_cfg: List[CallbackConfig]):
     
     callbacks = []
     for callback in callback_cfg:
-        callbacks.append(callback["class"](**callback["args"]))
+        callbacks.append(callback.class_name(**callback.args))
     
     return callbacks
         
