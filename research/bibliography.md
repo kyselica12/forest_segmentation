@@ -294,3 +294,12 @@ publisher={MDPI}
   year={2023}
 }
 ```
+### Weighted Intersection over Union (wIoU): A New Evaluation Metric for Image Segmentation
+```bibtex
+@article{cho2021weighted,
+  title={Weighted Intersection over Union (wIoU): A New Evaluation Metric for Image Segmentation},
+  author={Cho, Yeong-Jun},
+  journal={arXiv preprint arXiv:2107.09858},
+  year={2021}
+}
+```

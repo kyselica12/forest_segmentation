@@ -27,6 +27,8 @@
 - [Survey papers](#survey-papers)
     - [Self-supervised Learning in Remote Sensing: A review](#self-supervised-learning-in-remote-sensing-a-review-linkcitation)
 
+- [Metrics & lost functions](#metrics--loss-functions)
+
 &nbsp;
 - [Applications](#applications)
     - [Weakly supervised semantic segmentation of satellite images for land cover mapping - challenges and opportunites](#weakly-supervised-semantic-segmentation-of-satellite-images-for-land-cover-mapping---challenges-and-opportunities)
@@ -171,6 +173,27 @@ where $p$ is the position, $I$ is color (RGB) vector and $\sigma$ are hyper para
 - Comparison of deep learning models on banchmark datasets
 
     ![Self-supervised methods](./images/self-supervised_compared.png)
+
+
+## Metrics & Loss functions
+
+### Weighted Intersection over Union (wIoU): A New Evaluation Metric for Image Segmentation ([link](https://arxiv.org/pdf/2107.09858)/[citation](./bibliography.md#weighted-intersection-over-union-wiou-a-new-evaluation-metric-for-image-segmentation))
+
+- Proposed new metric for Image segmentation
+- Focus more on boundaries -> adjustable with $\alpha$ parameter
+- Weights are computed using L2 norm 
+    1. $D(p)$ distance to closest pixel of backgound (pixel belonging to other class)
+    1. Rescaled distances $\in (0,1)$ -> $\bar{D}(p) = D(p) / \text{max}(D(p))$
+    1. $W(p) = e^{-\alpha \bar{D}(p)}$ 
+
+
+|  |  |
+| :---: | :---: |
+| Ground truth | ![Ground truth image](./images/wIOU_gt.png) |
+| **Alpha** | **Weight map**| 
+| $\alpha=0.01$ | ![alpha 0.001](./images/wIOU_alpha_01.png) |
+| $\alpha=1$ | ![alpha 0.001](./images/wIOU_alpha_1.png) |
+| $\alpha=100$ | ![alpha 0.001](./images/wIOU_alpha_100.png) |
 
 
 ## Applications
