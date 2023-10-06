@@ -24,27 +24,31 @@ class Experiment:
             os.makedirs(self.output_root_dir)
         
         self.output_path = None
+        
+        self.module = None
+        self.data_processor = None
     
     
     def process_option(self, desc, val) -> Tuple[DataConfig, NetConfig]:
-        self.output_path = f"{self.output_root_dir}/{desc}"
-        
-        if not os.path.exists(self.output_path):
-            os.makedirs(self.output_path)
         
         return deepcopy(self.data_cfg), deepcopy(self.net_cfg) 
     
     def get_callbacks(self, desc, val):
         return []
         
-        
+    def get_module(self, desc, val, net_cfg):
+        return ImageSegmentationModule(**net_cfg.__dict__)
+    
+    def get_data_processor(self, desc, val, data_cfg):
+        return DataProcessor(data_cfg)
+    
     def run(self, options, n_epochs, batch_size, num_workers):
 
         for desc, val in options:
             data_cfg, net_cfg = self.process_option(desc, val)
 
-            module = ImageSegmentationModule(**net_cfg.__dict__)
-            data_processor = DataProcessor(data_cfg)
+            module = self.get_module(desc, val, net_cfg)
+            data_processor = self.get_data_processor(desc, val, data_cfg)
             
             logger = None
             if self.log_to_wandb:
