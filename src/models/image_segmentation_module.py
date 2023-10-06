@@ -45,9 +45,9 @@ class ImageSegmentationModule(pl.LightningModule):
         
     def _validation_step_basic(self, batch, batch_idx):
         preds, acc, loss = self._get_preds_acc_loss(batch, batch_idx)
-        self.log('val_loss', loss, sync_dist=True, sync_dist=True)
-        self.log('val_acc', acc, sync_dist=True, sync_dist=True)
-        self.log('val_dice_score', self._dice_score(preds, batch[1]), sync_dist=True, sync_dist=True)
+        self.log('val_loss', loss,  sync_dist=True)
+        self.log('val_acc', acc,  sync_dist=True)
+        self.log('val_dice_score', self._dice_score(preds, batch[1]),  sync_dist=True)
         return loss
     
     def _rich_validation_step(self, batch, batch_idx):
@@ -101,13 +101,13 @@ class ImageSegmentationModule(pl.LightningModule):
     def _dice_score(self, preds, targets):
         
         dice_score = 0
-        for i in range(len(self.cfg.data_config.classes)):
+        for i in range(self.n_classes):
             intersection = torch.logical_and(preds == (i+1), targets == (i+1)).sum()
             union = (preds == (i+1)).sum() + (targets == (i+1)).sum()
             dice = 2 * intersection / union
             dice_score += dice
         
-        dice_score /= len(self.cfg.data_config.classes)
+        dice_score /= self.n_classes
                  
         return dice_score
     

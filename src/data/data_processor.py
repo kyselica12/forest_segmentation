@@ -46,9 +46,10 @@ class DataProcessor:
     """
     
     def __init__(self, cfg: DataConfig):
+
+        self.cfg = cfg
         
         self.load = cfg.load
-        
         self.train_path = cfg.train_path
         self.val_path = cfg.val_path
         self.grid_path = cfg.grid_path

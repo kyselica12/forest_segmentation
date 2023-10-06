@@ -8,8 +8,10 @@ if SECRET_KEY:
     PACKAGE_PATH = "/app"
     DATA_PATH = "/data"
 else:
-    PACKAGE_PATH = "/home/k/kyselica12/work/forest_segmentation"
-    DATA_PATH = "/home/k/kyselica12/work/data"
+    # PACKAGE_PATH = "/home/k/kyselica12/work/forest_segmentation"
+    # DATA_PATH = "/home/k/kyselica12/work/data"
+    PACKAGE_PATH = '/home/daniel/Documents/work/forest_segmentation'
+    DATA_PATH = '/media/daniel/data1'
 
 ALL_BANDS_LIST = list(Sentinel2Bands)
 ALL_CLASSES_SET = set(ESAWorldCover)
@@ -25,6 +27,7 @@ DEFAULT = DataConfig(
     classes= set([ESAWorldCover.TREES]),
     train_path=f"{DATA_PATH}/sentinel2/2021_seasons/Belgium_summer2021",
     compute_mean_std=True,
+    output_path=f"{PACKAGE_PATH}/resources/datasets"
 )
 
 DATA_CONFIG_RGB = deepcopy(DEFAULT)
@@ -42,7 +45,7 @@ DEFAULT_NET_CONFIG = NetConfig(
     args={
         'encoder_name': 'timm-mobilenetv3_small_minimal_100',
         'encoder_weights': 'imagenet',
-    },callbacks = []
+    }
 )
 
 NET_CONFIG_IMAGENET_MOBILENET = deepcopy(DEFAULT_NET_CONFIG)

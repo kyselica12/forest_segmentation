@@ -70,8 +70,10 @@ def train(module: ImageSegmentationModule,
           callbacks=[],
           logger=None):
 
-    register_SSL4EO_S12_encoders(PACKAGE_PATH)
-    
+
+    if logger is not None and isinstance(logger, WandbLogger):
+        logger.experiment.config["data"] = data_processor.cfg.__dict__
+
     train_set, val_set = data_processor.get_pytorch_datasets() 
 
     train_loader = DataLoader(
@@ -93,5 +95,8 @@ def train(module: ImageSegmentationModule,
     trainer = Trainer(default_root_dir=f"{PACKAGE_PATH}/resources/pl/", max_epochs=num_epochs, logger=logger, callbacks=callbacks)
 
     trainer.fit(module, train_loader, val_loader)     
+
+    if logger is not None and isinstance(logger, WandbLogger):
+        wandb.finish()
 
     

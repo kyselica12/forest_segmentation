@@ -4,6 +4,10 @@ from configs.constants import PACKAGE_PATH
 from utils import train
 from typing import Tuple
 
+from models.image_segmentation_module import ImageSegmentationModule
+from data.data_processor import DataProcessor
+from utils import train, get_wabdb_logger
+
 #FIXME - not working due to refactoring - changes in train function
 #      - need to add arguments for Trainer  
 class Experiment:
@@ -23,7 +27,6 @@ class Experiment:
     
     
     def process_option(self, desc, val) -> Tuple[DataConfig, NetConfig]:
-        self.cfg.log_config.name = desc
         self.output_path = f"{self.output_root_dir}/{desc}"
         
         if not os.path.exists(self.output_path):
@@ -32,9 +35,19 @@ class Experiment:
         return deepcopy(self.data_cfg), deepcopy(self.net_cfg) 
         
         
-    def run(self, options, n_epochs, batch_size, num_workers, callbacks, logger):
+    def run(self, options, n_epochs, batch_size, num_workers, callbacks=[]):
 
         for desc, val in options:
             data_cfg, net_cfg = self.process_option(desc, val)
+
+            module = ImageSegmentationModule(net_cfg)
+            data_processor = DataProcessor(data_cfg)
+            
+            logger = None
+            if self.log_to_wandb:
+                logger = get_wabdb_logger(self.name, desc)
+
+            train(module, data_processor, n_epochs, batch_size, num_workers, callbacks, logger)
+
             
             
