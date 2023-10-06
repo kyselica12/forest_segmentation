@@ -33,19 +33,24 @@ class Experiment:
             os.makedirs(self.output_path)
         
         return deepcopy(self.data_cfg), deepcopy(self.net_cfg) 
+    
+    def get_callbacks(self, desc, val):
+        return []
         
         
-    def run(self, options, n_epochs, batch_size, num_workers, callbacks=[]):
+    def run(self, options, n_epochs, batch_size, num_workers):
 
         for desc, val in options:
             data_cfg, net_cfg = self.process_option(desc, val)
 
-            module = ImageSegmentationModule(net_cfg)
+            module = ImageSegmentationModule(**net_cfg.__dict__)
             data_processor = DataProcessor(data_cfg)
             
             logger = None
             if self.log_to_wandb:
                 logger = get_wabdb_logger(self.name, desc)
+            
+            callbacks = self.get_callbacks(desc, val)
 
             train(module, data_processor, n_epochs, batch_size, num_workers, callbacks, logger)
 

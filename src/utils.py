@@ -72,7 +72,8 @@ def train(module: ImageSegmentationModule,
 
 
     if logger is not None and isinstance(logger, WandbLogger):
-        logger.experiment.config["data"] = data_processor.cfg.__dict__
+        # logger.experiment.config["data"] = data_processor.cfg.__dict__
+        logger.log_hyperparams({"data": data_processor.cfg.__dict__})
 
     train_set, val_set = data_processor.get_pytorch_datasets() 
 

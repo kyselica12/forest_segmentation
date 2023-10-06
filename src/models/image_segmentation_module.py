@@ -11,15 +11,15 @@ from configs.config import NetConfig, NetworkArchitectures
 
 class ImageSegmentationModule(pl.LightningModule):
     
-    def __init__(self, cfg: NetConfig):
+    def __init__(self, n_classes, in_channels, architecture, args):
         super().__init__()
-        self.n_classes = cfg.n_classes
-        self.in_channels = cfg.in_channels
-        self.architecture = cfg.architecture
-        self.net_args = cfg.args
+        self.n_classes = n_classes
+        self.in_channels = in_channels
+        self.architecture = architecture
+        self.net_args = args
         self.rich_validation = False
 
-        self.save_hyperparameters(cfg.__dict__)
+        self.save_hyperparameters()
 
         self.net = self._initialize_net()
         self.criterion = nn.CrossEntropyLoss()

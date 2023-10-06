@@ -18,55 +18,63 @@ from utils import train, get_wabdb_logger, register_SSL4EO_S12_encoders
 from experiment import Experiment
 
 # from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
-PROJECT = "test"
-NAME = "RESNET18_S2"
+PROJECT = "Finetuned_2"
+NAME = "<PLACEHOLDER>"
 
 RESULTS_PATH = f"{PACKAGE_PATH}/results/{PROJECT}/{NAME}"
 os.makedirs(RESULTS_PATH, exist_ok=True)
 
 data_cfg: DataConfig = DATA_CONFIG_S2_C1
-data_cfg.train_path = f"{DATA_PATH}/sentinel2/2021_seasons/Belgium_summer2021"
-data_cfg.compute_mean_std = False
+data_cfg.train_path = f"{DATA_PATH}/2021_seasons"
+data_cfg.val_size = 0.1
+data_cfg.compute_mean_std = True
 
-net_cfg: NetConfig = NET_CONFIG_S2_RESNET18
+net_cfg: NetConfig = None  
 
-checkpoint_callback = ModelCheckpoint(
-    monitor='val_loss',
-    mode='min',
-    dirpath=f'{PACKAGE_PATH}/resources/models',
-    filename=f'{PROJECT}-{NAME}-' + '{epoch:02d}-{val_loss:.2f}',
-    save_top_k=3
-)
-
-stopping_callback = EarlyStopping(
-    monitor='val_loss',
-    patience=3,
-    mode='min',
-)
-    
 register_SSL4EO_S12_encoders(PACKAGE_PATH)   
 
-# data_processor = DataProcessor(data_cfg)
-# module = ImageSegmentationModule(net_cfg)
-
-# logger = get_wabdb_logger(PROJECT, NAME, log_model='all')
-
-# train(module, data_processor,
-#       num_epochs=10, batch_size=5, num_workers=0,
-#       callbacks=[checkpoint_callback, stopping_callback],
-#       logger=logger)
-
-class TestExperiment(Experiment):
-    
-    def process_option(self, desc, val) -> Tuple[DataConfig, NetConfig]:
-        data_cfg, net_cfg =  super().process_option(desc, val)
-
-        return data_cfg, net_cfg
-
-
 options = [
-    ("1", 1)
+    ('Resnet18_S2', NET_CONFIG_S2_RESNET18),
+    ('Resnet50_S2', NET_CONFIG_S2_RESNET50),
+    ('Resnet18_IMAGENET', NET_CONFIG_IMAGENET_RESNET18),
+    ('Resnet50_IMAGENET', NET_CONFIG_IMAGENET_RESNET50)
 ]
 
-experiment = TestExperiment(PROJECT, data_cfg, net_cfg, log_to_wandb=True)
-experiment.run(options, 1, 5, 0, [])
+class FinetuneExperiment(Experiment):
+    
+    def process_option(self, desc, val) -> Tuple[DataConfig, NetConfig]:
+        data_cfg, _ = super().process_option(desc, val)
+
+        net_cfg = val
+        
+        if 'IMAGENET' in desc:
+            data_cfg.use_level_C1 = False
+            data_cfg.bands = RGB_BANDS_LIST
+
+        return data_cfg, net_cfg
+    
+    def get_callbacks(self, desc, val):
+        checkpoint_callback = ModelCheckpoint(
+            monitor='val_loss',
+            mode='min',
+            dirpath=f'{PACKAGE_PATH}/resources/models',
+            filename=f'{PROJECT}-{desc}-' + '{epoch:02d}-{val_loss:.2f}',
+            save_top_k=3
+        )
+
+        stopping_callback = EarlyStopping(
+            monitor='val_loss',
+            patience=10,
+            mode='min',
+        )
+        
+        return [checkpoint_callback, stopping_callback]
+        
+
+experiment = FinetuneExperiment(PROJECT, data_cfg, net_cfg, log_to_wandb=True)
+
+experiment.run(options,
+               n_epochs=1000,
+               batch_size=10,
+               num_workers=0,
+               )
