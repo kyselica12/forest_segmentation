@@ -101,9 +101,11 @@ class ImageSegmentationModule(pl.LightningModule):
     def _dice_score(self, preds, targets):
         
         dice_score = 0
-        for i in range(self.n_classes):
-            intersection = torch.logical_and(preds == (i+1), targets == (i+1)).sum()
-            union = (preds == (i+1)).sum() + (targets == (i+1)).sum()
+        #FIXME compute for class lable 0??
+        #      -> should be done for all classes
+        for i in range(0, self.n_classes):
+            intersection = torch.logical_and(preds == i, targets == i).sum()
+            union = (preds == i).sum() + (targets == i).sum()
             dice = 2 * intersection / union
             dice_score += dice
         
