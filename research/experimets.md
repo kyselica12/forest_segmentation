@@ -54,3 +54,29 @@ The results shows that the normalization helps quite a lot for the fine-tuning f
 |  | [csv](./../md_assets/experiments/experiment3_train_acc.csv) | [csv](./../md_assets/experiments/experiment3_val_acc.csv) |
 | ResNet18 pretrained on SSL4EO-S12 | ![Training accuracy](./../md_assets/images/experiment3_train_acc_S2.png) | ![Validation accuracy](./../md_assets/images/experiment3_val_acc_S2.png) |
 |  | [csv](./../md_assets/experiments/experiment3_train_acc_S2.csv) | [csv](./../md_assets/experiments/experiment3_val_acc_S2.csv) |
+
+## 4. Experiment - Finetuning
+
+Finetuning of 4 Unet networks with different backbones pretrained on either SSL4EO-S12 or IMAGENET dataset. All models were trained on SATURN (FMFI UK) server.
+
+Training configurations:
+* `batch_size = 10` - due to GPU memory limit
+* `num_workers = 0`
+* `early stopping`
+    * `monitor` -> validation loss
+    * `stop criterion` -> no improvement in `5` epochs
+* `dataset` 
+    * 3 seasons of the year 2021 (spring, summer, autumn)
+    * validation split `0.1` based on location
+
+### Results
+
+Backbones pretrained on the SSL4EO-S12 dataset performed better with margin $ \approx1\%$ over models pretrained using Imagenet. For the specific backbone architecture both *Resnet 18* and *Resnet 50* performed similarly - possibly due to small mini batch size and other hyperparameters.
+
+**BEST MODEL ==> Resnet 18 (SSL4EO-S12 pretrained)**
+
+| | |
+| --- | --- |
+| Validation loss | ![Val loss](../md_assets/images/finetuned_val_loss.png) |
+| Validation accuracy | ![Val loss](../md_assets/images/finetuned_val_acc.png) |
+| Validation dice score | ![Val loss](../md_assets/images/finetuned_dice_score.png) |
