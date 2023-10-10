@@ -8,6 +8,7 @@ import torch.optim as optim
 import segmentation_models_pytorch as smp
 
 from configs.config import NetConfig, NetworkArchitectures
+from configs.constants import IGNORE_INDDEX
 
 class ImageSegmentationModule(pl.LightningModule):
     
@@ -22,7 +23,7 @@ class ImageSegmentationModule(pl.LightningModule):
         self.save_hyperparameters()
 
         self.net = self._initialize_net()
-        self.criterion = nn.CrossEntropyLoss(ignore_index=-1)
+        self.criterion = nn.CrossEntropyLoss(ignore_index=IGNORE_INDDEX)
         torch.set_float32_matmul_precision("high")
         
         
@@ -45,7 +46,6 @@ class ImageSegmentationModule(pl.LightningModule):
         
     def _validation_step_basic(self, batch, batch_idx):
         preds, acc, loss = self._get_preds_acc_loss(batch, batch_idx)
-        # print(loss)
         self.log('val_loss', loss,  sync_dist=True)
         self.log('val_acc', acc,  sync_dist=True)
         self.log('val_dice_score', self._dice_score(preds, batch[1]),  sync_dist=True)
@@ -105,12 +105,10 @@ class ImageSegmentationModule(pl.LightningModule):
     def _dice_score(self, preds, targets):
         
         dice_score = 0
-        #FIXME compute for class lable 0??
-        #      -> should be done for all classes
         for i in range(0, self.n_classes):
             intersection = torch.logical_and(preds == i, targets == i).sum()
             union = (preds == i).sum() + (targets == i).sum()
-            dice = 2 * intersection / union
+            dice = 2 * (intersection +1) / (union + 1)
             dice_score += dice
         
         dice_score /= self.n_classes

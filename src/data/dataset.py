@@ -5,7 +5,7 @@ import tifffile
 import tqdm
 import numpy as np
 
-from configs.constants import ALL_BANDS_LIST
+from configs.constants import ALL_BANDS_LIST, IGNORE_INDDEX
 
 class SentinelDataset(Dataset):
     
@@ -45,10 +45,8 @@ class SentinelDataset(Dataset):
 
         empty = image.sum(axis=2) == 0
 
-        print(":)")
-
         mask = tifffile.imread(mask_path)
-        mask[empty] = -1
+        mask[empty] = IGNORE_INDDEX
                 
         if self.label_mappings is not None:
             for key, value in self.label_mappings.items():
@@ -67,7 +65,7 @@ class SentinelDataset(Dataset):
     
 if __name__ == "__main__":
     
-    from Kyselica.src.data.utils import load_dataset_csv, split_data
+    from data.utils import load_dataset_csv, split_data
     
     # split_data("/media/daniel/data/sentinel2/Belgium_summer2022/", output_path='./')
     

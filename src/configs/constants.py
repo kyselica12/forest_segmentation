@@ -8,10 +8,10 @@ if SECRET_KEY:
     PACKAGE_PATH = "/app"
     DATA_PATH = "/data"
 else:
-    PACKAGE_PATH = "/home/k/kyselica12/work/forest_segmentation"
-    DATA_PATH = "/home/k/kyselica12/work/data"
-    # PACKAGE_PATH = '/home/daniel/Documents/work/forest_segmentation'
-    # DATA_PATH = '/media/daniel/data1'
+    # PACKAGE_PATH = "/home/k/kyselica12/work/forest_segmentation"
+    # DATA_PATH = "/home/k/kyselica12/work/data"
+    PACKAGE_PATH = '/home/daniel/Documents/work/forest_segmentation'
+    DATA_PATH = '/media/daniel/data1'
 
 ALL_BANDS_LIST = list(Sentinel2Bands)
 RGB_BANDS_LIST = [Sentinel2Bands.B4, Sentinel2Bands.B3, Sentinel2Bands.B2]
@@ -19,7 +19,7 @@ ALL_CLASSES_SET = set(ESAWorldCover)
 
 WANDB_API_KEY = "b73e051ec86e9d3e56a2d2c47f1e3661a1b2a4db"
 
-
+IGNORE_INDDEX = 255
 
 DEFAULT = DataConfig(
     val_size=0.2,
