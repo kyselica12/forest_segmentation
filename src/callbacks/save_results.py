@@ -35,11 +35,14 @@ class SaveResults(Callback):
         self.mode = mode
         self.size = size
         self.data_processor = data_processor
+
+        print(self.data_processor)
         self.queue = []
         
         self.output_queue = []
 
         self.default_value = -1e9
+        self.sign = 1 if self.mode == "max" else -1
         
     
     def setup(self, trainer: Trainer, pl_module: LightningModule, stage: str) -> None:
@@ -83,7 +86,7 @@ class SaveResults(Callback):
                 heapq.heappush(
                     self.queue,
                     (
-                        metric[i] * (1 if self.mode == "max" else -1), 
+                        metric[i] * self.sign, 
                         { 
                         self.monitor: metric[i], 
                         "preds": preds[i].detach().cpu().numpy(),
@@ -93,7 +96,7 @@ class SaveResults(Callback):
                     )
                 )
             
-                if len(self.queue) > self.num:
+                while len(self.queue) > self.num:
                     heapq.heappop(self.queue)
              
                 current = self.queue[0][0]
@@ -110,7 +113,7 @@ class SaveResults(Callback):
             # print(images["preds"].shape, images["target"].shape)
             data.append(
                 [
-                    metric,
+                    metric * self.sign,
                     img,
                     color.label2rgb(images["preds"], img, alpha=0.3),
                     color.label2rgb(images["target"], img,  alpha=0.3),

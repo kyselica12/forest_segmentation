@@ -67,6 +67,7 @@ class DataConfig:
     load: bool = True
     compute_mean_std: bool = False
     use_level_C1: bool = False    
+    non_zero_ratio: float = 0.5
 
 @dataclass
 class NetConfig:

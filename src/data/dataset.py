@@ -41,8 +41,14 @@ class SentinelDataset(Dataset):
         image = tifffile.imread(img_path).transpose(1,2,0)
         image = self._normalize(image)
         image = image[:, :, self.use_bands]
+        image[np.isnan(image)] = 0
+
+        empty = image.sum(axis=2) == 0
+
+        print(":)")
 
         mask = tifffile.imread(mask_path)
+        mask[empty] = -1
                 
         if self.label_mappings is not None:
             for key, value in self.label_mappings.items():

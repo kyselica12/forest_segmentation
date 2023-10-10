@@ -4,10 +4,12 @@ import re
 import json
 import tqdm
 import hashlib
-
+import tifffile
+import tqdm
 
 import numpy as np
 import pandas as pd
+from scipy.ndimage import distance_transform_edt
 
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -66,6 +68,8 @@ class DataProcessor:
         self.train_set = None
         self.val_set = None
         
+        self.non_zero_ration = cfg.non_zero_ratio
+        
         self.mean = np.zeros((len(ALL_BANDS_LIST),))
         self.std = np.ones((len(ALL_BANDS_LIST),))
         
@@ -80,11 +84,11 @@ class DataProcessor:
         
         self.use_level_C1 = cfg.use_level_C1
         self.compute_mean_std = cfg.compute_mean_std
-        
+
         hash_string = repr((  self.scale,
                               self.width, self.height, 
                               self.train_path, self.val_path, self.grid_path, 
-                              self.val_size, self.random_state))
+                              self.val_size, self.random_state, self.non_zero_ration))
         self.hash = hashlib.md5(hash_string.encode('utf-8')).hexdigest()
         print(f"Dataset hash: {self.hash}")
 
@@ -94,7 +98,6 @@ class DataProcessor:
         
         self.prepare_datasets()
         
-    
     def prepare_datasets(self):
         """Three main steps:
             1. Load data from files
@@ -115,7 +118,6 @@ class DataProcessor:
             else:
                 self.mean, self.std = self._compute_mean_std(self.X_train, self.y_train, self.scale, self.width, self.height)
                 self._save_mean_std(self.output_path)
-
 
     def save_csv_dataset(self):
         """Save dataset to .csv files
@@ -149,7 +151,6 @@ class DataProcessor:
         self.y_train = train_masks
         self.X_val = val_images
         self.y_val = val_masks
-
         
     def load_csv_dataset(self):
         """
@@ -219,9 +220,24 @@ class DataProcessor:
             tuple[list[int], list[int]]: train and validation indices
         """
         
-        image_list = sorted(glob.glob(f"{folder}/images/*.tif"))
-        mask_list = sorted(glob.glob(f"{folder}/masks/*.tif"))
-        return image_list, mask_list        
+        all_images = sorted(glob.glob(f"{folder}/images/*.tif"))
+        all_masks = sorted(glob.glob(f"{folder}/masks/*.tif"))
+
+        image_list = []
+        mask_list = []
+
+        pb = tqdm.tqdm(total=len(all_images), desc=f'Loading: {folder}')
+
+        for img, mask in zip(all_images, all_masks):
+            if self._image_non_zero_ratio(img, self.non_zero_ration):
+                image_list.append(img)
+                mask_list.append(mask)
+            pb.update(1)
+        pb.close()
+
+        print(f"Loaded: {len(image_list)}, discarded: {len(all_images)-len(image_list)}")
+        
+        return image_list, mask_list
     
     def _split_train_val_indices(self, N, val_size=0.2, random_state=42):
         """Split indices into train and validation sets
@@ -452,7 +468,12 @@ class DataProcessor:
         Returns:
             array: RGB image
         """ 
+        
+        if self.use_level_C1:
+            image = np.delete(image, 10, 0)
+            
         image = image.transpose(1,2,0)
+        
         mask = np.sign(image)
         image = image * self.std[self.bands] + self.mean[self.bands]
         image = image * mask
@@ -487,4 +508,47 @@ class DataProcessor:
         
         return res 
         
+    def create_distance_masks(self, mask_list, output_path):
         
+        if not os.path.exists(f'{output_path}/distance'):
+            os.mkdir(f'{output_path}/distance')
+        
+        weight_masks_list = []  
+        for mask_path in mask_list:
+            mask = tifffile.imread(mask_path)
+            dist = self._compute_distance_mask(mask, self.classes)
+            
+            mask_name = os.path.split()[-1][:-len('.tif')]
+            name = f'DIST_{mask_name}_{self.hash}.npy'
+            dist_path = f'{output_path}/distance/{name}.npy'
+            weight_masks_list.append(dist_path)
+            
+            np.save(dist_path, dist)
+        
+        return weight_masks_list
+        
+    def _image_non_zero_ratio(self, image_path, ratio):
+        
+        image = tifffile.imread(image_path)
+        image = image.transpose(1,2,0)
+        image = image.sum(axis=2)
+        no_information = np.logical_or(image == 0, np.isnan(image))
+
+        zero_pixels = np.sum(no_information)
+
+        return zero_pixels / (self.width * self.height) <= ratio
+        
+    
+    def _compute_distance_mask(self, mask, classes):
+        
+        result = np.zeros(mask.shape)
+        
+        for c in classes:
+            input_mask = np.zeros(mask.shape) 
+            input_mask[mask == c] = 1
+            
+            dist = distance_transform_edt(input_mask)
+            
+            result += dist
+        
+        return result

@@ -22,7 +22,7 @@ class ImageSegmentationModule(pl.LightningModule):
         self.save_hyperparameters()
 
         self.net = self._initialize_net()
-        self.criterion = nn.CrossEntropyLoss()
+        self.criterion = nn.CrossEntropyLoss(ignore_index=-1)
         torch.set_float32_matmul_precision("high")
         
         
@@ -45,6 +45,7 @@ class ImageSegmentationModule(pl.LightningModule):
         
     def _validation_step_basic(self, batch, batch_idx):
         preds, acc, loss = self._get_preds_acc_loss(batch, batch_idx)
+        # print(loss)
         self.log('val_loss', loss,  sync_dist=True)
         self.log('val_acc', acc,  sync_dist=True)
         self.log('val_dice_score', self._dice_score(preds, batch[1]),  sync_dist=True)
@@ -87,12 +88,15 @@ class ImageSegmentationModule(pl.LightningModule):
        
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=1e-4)
+        
         return optimizer
     
     def _get_preds_acc_loss(self, batch, batch_idx):
         x, y = batch
         logits = self.net(x.float())
+
         loss = self.criterion(logits, y.long())
+        
         preds = torch.argmax(logits,dim=1)
         acc = (preds == y).sum() / torch.numel(preds)
      

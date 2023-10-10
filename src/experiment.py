@@ -33,13 +33,13 @@ class Experiment:
         
         return deepcopy(self.data_cfg), deepcopy(self.net_cfg) 
     
-    def get_callbacks(self, desc, val):
+    def build_callbacks(self, desc, val):
         return []
         
-    def get_module(self, desc, val, net_cfg):
+    def build_module(self, desc, val, net_cfg):
         return ImageSegmentationModule(**net_cfg.__dict__)
     
-    def get_data_processor(self, desc, val, data_cfg):
+    def build_data_processor(self, desc, val, data_cfg):
         return DataProcessor(data_cfg)
     
     def run(self, options, n_epochs, batch_size, num_workers):
@@ -47,14 +47,14 @@ class Experiment:
         for desc, val in options:
             data_cfg, net_cfg = self.process_option(desc, val)
 
-            module = self.get_module(desc, val, net_cfg)
-            data_processor = self.get_data_processor(desc, val, data_cfg)
+            module = self.build_module(desc, val, net_cfg)
+            data_processor = self.build_data_processor(desc, val, data_cfg)
             
             logger = None
             if self.log_to_wandb:
                 logger = get_wabdb_logger(self.name, desc)
             
-            callbacks = self.get_callbacks(desc, val)
+            callbacks = self.build_callbacks(desc, val)
 
             train(module, data_processor, n_epochs, batch_size, num_workers, callbacks, logger)
 
