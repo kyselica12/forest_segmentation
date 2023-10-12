@@ -80,3 +80,37 @@ Backbones pretrained on the SSL4EO-S12 dataset performed better with margin $ \a
 | Validation loss | ![Val loss](../md_assets/images/finetuned_val_loss.png) |
 | Validation accuracy | ![Val loss](../md_assets/images/finetuned_val_acc.png) |
 | Validation dice score | ![Val loss](../md_assets/images/finetuned_dice_score.png) |
+
+
+## 5. Experiment - Finetuning / masked data
+
+Data in previous experiments contained examples in which the input image did not contained much information. There are two scenarios when pixel value is set to Nan or 0:
+    
+- Pixel is occluded by clouds and cloud mask is set for this pixel -> Nan
+- Pixel is looking at position outside of the region of interest (in this example Belgium) and set to 0
+
+To remove examples with too little information a preprocessing step filters out all input images with $\geq 30\%$  NaN or zero pixels.
+
+Loss function is modified so it doesnt count positions which in the original image are NaN or zero values.
+
+Two models have been trained both using ResNet18 SSL4EO-S12 pretrained backbone. Dataset consits of three seasons (summer, autumn, spring) in the year 2021.
+
+### Results
+
+Unet model performs slightly better on the validation set. Training was performed using smaller batch size (16) than for the DeepLab (32) due to size of the model and GPU memory limitations.
+
+| | Train | Validation |
+| :---: | :---: | :---: |
+| Loss | ![Train loss](../md_assets/images/experiment5/train_loss_2.png) | ![Val loss](../md_assets/images/experiment5/val_loss_2.png) | 
+| Accuracy | ![Train acc](../md_assets/images/experiment5/train_acc_2.png) | ![Val acc](../md_assets/images/experiment5/val_acc2.png) | 
+| Dice score | ![Train dice](../md_assets/images/experiment5/train_dice_2.png) | ![Val dice](../md_assets/images/experiment5/val_dice_2.png) | 
+
+
+| Model | Val accuracy | Val dice score | Val loss | Val wIoU ($\alpha=1$) |
+| --- | ---: | ---: | ---: | ---: | 
+| Unet | 0.9337 | 0.9250 | 0.1443 | 0.8152 |
+| DeepLabV3+ | 0.9313 | 0.9217 | 0.1502 |  0.8093 |
+
+**Checkpoints**
+- Unet:  `Finetuning_masked_data-Unet-epoch=48-val_loss=0.14.ckpt`
+- DeepLabV3+: `Finetuning_masked_data-DeepLabv3+-epoch=71-val_loss=0.15.ckpt`
