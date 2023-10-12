@@ -33,13 +33,14 @@ class MeanWeightedIoU(Callback):
                                 batch: Any, batch_idx: int, 
                                 dataloader_idx: int = 0) -> None:
         
-        masks = outputs["metric"].detach().cpu().numpy() 
+        masks = outputs["targets"].detach().cpu().numpy() 
         preds = outputs["preds"].detach().cpu().numpy()
         
         weights = list(map(self.compute_weight_mask, masks))
 
-        mean_wIoU = np.mean(list(map(self.wIoU, [preds, masks, weights])))
-
+        IoUs = [self.wIoU(p, m, w) for p,m,w in zip(preds, masks, weights)]
+        mean_wIoU = np.mean(IoUs)
+        
         pl_module.log("val_mean_wIoU", mean_wIoU)
 
     def compute_weight_mask(self, mask):
@@ -51,6 +52,7 @@ class MeanWeightedIoU(Callback):
             input_mask[mask == c] = 1
             
             dist = distance_transform_edt(input_mask)
+            dist = dist / np.max(dist)
             
             result += dist
         
@@ -61,10 +63,10 @@ class MeanWeightedIoU(Callback):
         IoU = 0
         for c in range(self.num_classes):
         
-            intersection = weight[pred == mask].sum()
+            intersection = weight[np.logical_and(pred == c, mask ==c)].sum()
             union = weight[np.logical_or(pred == c, mask ==c)].sum()
             
-            IoU += intersection / (union - intersection)
+            IoU += np.abs(intersection / union)
         
         wIoU = IoU / self.num_classes 
         
