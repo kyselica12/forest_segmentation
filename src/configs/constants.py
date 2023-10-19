@@ -19,7 +19,9 @@ ALL_CLASSES_SET = set(ESAWorldCover)
 
 WANDB_API_KEY = "b73e051ec86e9d3e56a2d2c47f1e3661a1b2a4db"
 
-IGNORE_INDDEX = 255
+# used to mask out pixels with no data in input image
+IGNORE_INDDEX = 255 # Max value for uint8
+MASK_DIFFERENCE_INDEX = 254
 
 DEFAULT = DataConfig(
     val_size=0.2,

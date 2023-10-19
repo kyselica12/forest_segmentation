@@ -1,3 +1,4 @@
+import re
 from torch.utils.data import Dataset
 import torch
 import os
@@ -5,12 +6,21 @@ import tifffile
 import tqdm
 import numpy as np
 
-from configs.constants import ALL_BANDS_LIST, IGNORE_INDDEX
+from configs.constants import ALL_BANDS_LIST, IGNORE_INDDEX, MASK_DIFFERENCE_INDEX
 
 class SentinelDataset(Dataset):
     
     
-    def __init__(self, image_list, mask_list, bands=ALL_BANDS_LIST, label_mappings=None, transforms=None, scale=10000, mean=None, std=None, mode='basic', use_level_C1=False):
+    def __init__(self, image_list, mask_list,
+            bands=ALL_BANDS_LIST, 
+            label_mappings=None, 
+            transforms=None, 
+            scale=10000,
+            mean=None,
+            std=None,
+            mode='basic',
+            use_level_C1=False,
+            improved_mask=False):
         
         self.image_list = image_list
         self.mask_list = mask_list
@@ -22,6 +32,8 @@ class SentinelDataset(Dataset):
         self.mean = mean
         self.std = std
         self.scale = scale
+
+        self.improved_mask = improved_mask
             
     def _normalize(self, image):
         
@@ -37,6 +49,7 @@ class SentinelDataset(Dataset):
         
         img_path = self.image_list[idx]
         mask_path = self.mask_list[idx]
+
         
         image = tifffile.imread(img_path).transpose(1,2,0)
         image = self._normalize(image)
@@ -46,6 +59,22 @@ class SentinelDataset(Dataset):
         empty = image.sum(axis=2) == 0
 
         mask = tifffile.imread(mask_path)
+        
+        if self.improved_mask:
+            folder_path, name = os.path.split(self.image_list[idx])
+            
+            res= re.findall(r'(\d+)', name)  
+            image_idx = int(res[-1])
+            
+            folder_path = os.path.split(self.image_list[idx])[-1]
+            
+            folder_path = folder_path.replace('/images', '')
+            improved_mask = tifffile.imread(f'{folder_path}/improved_mask/mask{image_idx:04}.tif')
+            difference = tifffile.imread(f'{folder_path}/improved_mask/difference{image_idx:04}.tif')
+
+            improved_mask[difference == 1] = MASK_DIFFERENCE_INDEX
+            mask = improved_mask
+
         mask[empty] = IGNORE_INDDEX
                 
         if self.label_mappings is not None:

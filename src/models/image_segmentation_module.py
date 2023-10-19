@@ -8,7 +8,7 @@ import torch.optim as optim
 import segmentation_models_pytorch as smp
 
 from configs.config import NetConfig, NetworkArchitectures
-from configs.constants import IGNORE_INDDEX
+from configs.constants import IGNORE_INDDEX, MASK_DIFFERENCE_INDEX
 
 class ImageSegmentationModule(pl.LightningModule):
     
@@ -23,7 +23,7 @@ class ImageSegmentationModule(pl.LightningModule):
         self.save_hyperparameters()
 
         self.net = self._initialize_net()
-        self.criterion = nn.CrossEntropyLoss(ignore_index=IGNORE_INDDEX)
+        self.criterion = nn.CrossEntropyLoss(reduction='none', ignore_index=IGNORE_INDDEX)
         torch.set_float32_matmul_precision("high")
         
         
@@ -31,7 +31,8 @@ class ImageSegmentationModule(pl.LightningModule):
         return self.net(x)
     
     def training_step(self, batch, batch_idx):
-        preds, acc, loss = self._get_preds_acc_loss(batch, batch_idx)
+        preds, acc, losses = self._get_preds_acc_losses(batch, batch_idx)
+        loss = losses.mean()
         self.log('train_loss', loss, sync_dist=True)
         self.log('train_acc', acc, sync_dist=True)
         self.log('train_dice_score', self._dice_score(preds, batch[1]), sync_dist=True)
@@ -39,46 +40,25 @@ class ImageSegmentationModule(pl.LightningModule):
         return loss
     
     def validation_step(self, batch, batch_idx):
-        if self.rich_validation:
-            return self._rich_validation_step(batch, batch_idx)
-
-        return self._validation_step_basic(batch, batch_idx)
-        
-    def _validation_step_basic(self, batch, batch_idx):
-        preds, acc, loss = self._get_preds_acc_loss(batch, batch_idx)
+        preds, acc, losses = self._get_preds_acc_losses(batch, batch_idx)
+        loss = losses.mean()
         self.log('val_loss', loss,  sync_dist=True)
         self.log('val_acc', acc,  sync_dist=True)
         self.log('val_dice_score', self._dice_score(preds, batch[1]),  sync_dist=True)
-        return loss
-    
-    def _rich_validation_step(self, batch, batch_idx):
-        x, y = batch
-        logits = self.net(x.float())
-        preds = torch.argmax(logits,dim=1)
-        acc = (preds == y).sum() / torch.numel(preds)
-        
-        losses = []
-        for l, t in zip(logits, y):
-            l = l.unsqueeze(0)
-            t = t.unsqueeze(0)
-            losses.append(self.criterion(l, t.long()))
-        
-        losses = torch.tensor(losses)
-        
-        self.log('val_loss', losses.mean(), sync_dist=True)
-        self.log('val_acc', acc, sync_dist=True)
-        self.log('val_dice_score', self._dice_score(preds, batch[1]), sync_dist=True)
 
-        return {
-            "inputs": batch[0],
-            "targets": batch[1],
-            "preds": preds,
-            "metric": losses
-        } 
+        if self.rich_validation:
+            return {
+                "inputs": batch[0],
+                "targets": batch[1],
+                "preds": preds,
+                "metric": losses
+            } 
+        
+        return loss
 
     def test_step(self, batch, batch_idx):
-        preds, acc, loss = self._get_preds_acc_loss(batch, batch_idx)
-        
+        preds, acc, losses = self._get_preds_acc_losses(batch, batch_idx)
+        loss = losses.mean()
         self.test_step_outputs.append({
             'preds': preds, 'acc': acc, 'loss': loss,
             'input': batch[0], 'target': batch[1]
@@ -91,16 +71,23 @@ class ImageSegmentationModule(pl.LightningModule):
         
         return optimizer
     
-    def _get_preds_acc_loss(self, batch, batch_idx):
+    def _get_preds_acc_losses(self, batch, batch_idx):
         x, y = batch
-        logits = self.net(x.float())
-
-        loss = self.criterion(logits, y.long())
+        #TODO if y contains MASK_DIFFERENCE_INDEX create weight map for the loss function
+        # target = y.copy()
+        # weight_map = torch.ones_like(target)
+        # weight_map[target == MASK_DIFFERENCE_INDEX] = 0.5 # value to be set in the config
+        # target[target == MASK_DIFFERENCE_INDEX] = 1
         
+        logits = self.net(x.float())
+        losses = self.criterion(logits, y.long())
+
+        # losses = losses * weight_map
+
         preds = torch.argmax(logits,dim=1)
         acc = (preds == y).sum() / torch.numel(preds)
      
-        return preds, acc, loss
+        return preds, acc, losses
 
     def _dice_score(self, preds, targets):
         
