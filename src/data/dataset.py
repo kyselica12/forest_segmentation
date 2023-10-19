@@ -65,10 +65,8 @@ class SentinelDataset(Dataset):
             
             res= re.findall(r'(\d+)', name)  
             image_idx = int(res[-1])
-            
             folder_path = os.path.split(folder_path)[0]
             
-            # improved_mask = tifffile.imread(f'{folder_path}/improved_mask/mask{image_idx:04}.tif')
             difference = tifffile.imread(f'{folder_path}/improved_masks/difference_{image_idx:04}.tif')
 
             mask[difference == 1] = MASK_DIFFERENCE_INDEX
