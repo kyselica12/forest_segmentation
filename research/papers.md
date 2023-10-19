@@ -497,6 +497,10 @@ where $p$ is the position, $I$ is color (RGB) vector and $\sigma$ are hyper para
 
 ### Enhancing Land Cover Mapping and Monitoring: An Interactive and Explainable Machine Learning Approach Using Google Earth Engine ([link](https://www.mdpi.com/2072-4292/15/18/4585)/[citation](./bibliography.md#enhancing-land-cover-mapping-and-monitoring-an-interactive-and-explainable-machine-learning-approach-using-google-earth-engine))
 
+- Interactive tool for land cover mapping using Google Earth Engine
+- Uses Sentinel 2 data
+![Diagram](./images/gee_colab_tool.png)
+
 ### SEG-ESRGAN: A Multi-Task Netwoek for Super-Resolution and Semantic Segmentation of Remote Sensing Images ([link](https://www.mdpi.com/2072-4292/14/22/5862)/[citation](./bibliography.md#seg-esrgan-a-multi-task-netwoek-for-super-resolution-and-semantic-segmentation-of-remote-sensing-images))
 
 - Performing two tasks at once:

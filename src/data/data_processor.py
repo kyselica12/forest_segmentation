@@ -84,6 +84,7 @@ class DataProcessor:
         
         self.use_level_C1 = cfg.use_level_C1
         self.compute_mean_std = cfg.compute_mean_std
+        self.improved_mask = cfg.improved_mask
 
         hash_string = repr((  self.scale,
                               self.width, self.height, 
@@ -450,12 +451,14 @@ class DataProcessor:
             self.train_set = SentinelDataset(self.X_train, self.y_train, bands=self.bands, 
                                         transforms=t_train, label_mappings=class_remap,
                                         scale=self.scale, mean=self.mean, std=self.std, 
-                                        use_level_C1=self.use_level_C1)
+                                        use_level_C1=self.use_level_C1,
+                                        improved_mask=self.improved_mask)
             
             self.val_set = SentinelDataset(self.X_val, self.y_val, bands=self.bands, 
                                         transforms=t_val, label_mappings=class_remap,
                                         scale=self.scale, mean=self.mean, std=self.std,  
-                                        use_level_C1=self.use_level_C1)
+                                        use_level_C1=self.use_level_C1,
+                                        improved_mask=self.improved_mask)
         
         return self.train_set, self.val_set
 

@@ -66,8 +66,9 @@ class DataConfig:
     grid_path: str = None
     load: bool = True
     compute_mean_std: bool = False
-    use_level_C1: bool = False    
+    use_level_C1: bool = False   
     non_zero_ratio: float = 0.5
+    improved_mask: bool = False
 
 @dataclass
 class NetConfig:
