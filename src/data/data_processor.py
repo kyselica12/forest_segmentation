@@ -229,7 +229,7 @@ class DataProcessor:
         pb = tqdm.tqdm(total=len(all_images), desc=f'Loading: {folder}')
 
         for img, mask in zip(all_images, all_masks):
-            if self._image_non_zero_ratio(img, self.non_zero_ration):
+            if self._image_zero_ratio(img) <= (1-self.non_zero_ration):
                 image_list.append(img)
                 mask_list.append(mask)
             pb.update(1)
@@ -527,7 +527,7 @@ class DataProcessor:
         
         return weight_masks_list
         
-    def _image_non_zero_ratio(self, image_path, ratio):
+    def _image_zero_ratio(self, image_path):
         
         image = tifffile.imread(image_path)
         image = image.transpose(1,2,0)
@@ -536,7 +536,7 @@ class DataProcessor:
 
         zero_pixels = np.sum(no_information)
 
-        return zero_pixels / (self.width * self.height) <= ratio
+        return zero_pixels / (self.width * self.height) 
         
     
     def _compute_distance_mask(self, mask, classes):
