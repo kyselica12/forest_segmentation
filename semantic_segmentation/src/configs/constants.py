@@ -17,7 +17,10 @@ ALL_BANDS_LIST = list(Sentinel2Bands)
 RGB_BANDS_LIST = [Sentinel2Bands.B4, Sentinel2Bands.B3, Sentinel2Bands.B2]
 ALL_CLASSES_SET = set(ESAWorldCover)
 
-WANDB_API_KEY = open("wandb.key")
+WANDB_API_KEY = None
+with open("wandb.key", "r") as f:
+    WANDB_API_KEY = f.read()
+    
 # used to mask out pixels with no data in input image
 IGNORE_INDDEX = 255 # Max value for uint8
 # used for mask improvement
